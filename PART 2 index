@@ -1,0 +1,836 @@
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  Pressable,
+  FlatList,
+  Alert,
+  StatusBar,
+} from 'react-native';
+
+import { Picker } from '@react-native-picker/picker';
+
+type MenuItem = {
+  id: string;
+  dishName: string;
+  description: string;
+  course: string;
+  price: string;
+};
+
+export default function HomeScreen() {
+  const [screen, setScreen] = useState<'home' | 'add'>('home');
+
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+
+  const [dishName, setDishName] = useState('');
+  const [description, setDescription] = useState('');
+  const [course, setCourse] = useState('');
+  const [price, setPrice] = useState('');
+
+  const [error, setError] = useState('');
+
+  // Clear the form
+  const clearForm = () => {
+    setDishName('');
+    setDescription('');
+    setCourse('');
+    setPrice('');
+    setError('');
+  };
+
+  // Add a new menu item
+  const addMenuItem = () => {
+    if (dishName.trim() === '') {
+      setError('Please enter the dish name.');
+      return;
+    }
+
+    if (description.trim() === '') {
+      setError('Please enter the description.');
+      return;
+    }
+
+    if (course === '') {
+      setError('Please select a course.');
+      return;
+    }
+
+    if (price.trim() === '') {
+      setError('Please enter the price.');
+      return;
+    }
+
+    const priceNumber = Number(price);
+
+    if (isNaN(priceNumber) || priceNumber <= 0) {
+      setError('Please enter a valid price greater than R0.');
+      return;
+    }
+
+    const newMenuItem: MenuItem = {
+      id: Date.now().toString(),
+      dishName: dishName.trim(),
+      description: description.trim(),
+      course: course,
+      price: priceNumber.toFixed(2),
+    };
+
+    setMenuItems((oldItems) => [
+      ...oldItems,
+      newMenuItem,
+    ]);
+
+    Alert.alert(
+      'Menu Item Added',
+      `${dishName.trim()} has been successfully added to the menu.`
+    );
+
+    clearForm();
+    setScreen('home');
+  };
+
+  // Display one menu item
+  const renderMenuItem = ({
+    item,
+  }: {
+    item: MenuItem;
+  }) => {
+    return (
+      <View style={styles.menuCard}>
+
+        <View style={styles.menuTop}>
+
+          <Text style={styles.dishName}>
+            {item.dishName}
+          </Text>
+
+          <View style={styles.courseBadge}>
+            <Text style={styles.courseText}>
+              {item.course}
+            </Text>
+          </View>
+
+        </View>
+
+        <Text style={styles.description}>
+          {item.description}
+        </Text>
+
+        <View style={styles.priceRow}>
+
+          <Text style={styles.priceLabel}>
+            Price
+          </Text>
+
+          <Text style={styles.price}>
+            R {item.price}
+          </Text>
+
+        </View>
+
+      </View>
+    );
+  };
+
+  // =====================================================
+  // HOME SCREEN
+  // =====================================================
+
+  if (screen === 'home') {
+    return (
+      <View style={styles.container}>
+
+        <StatusBar
+          barStyle="light-content"
+        />
+
+        {/* HEADER */}
+
+        <View style={styles.header}>
+
+          <Text style={styles.title}>
+            Restaurant
+          </Text>
+
+          <Text style={styles.titleAccent}>
+            Menu Manager
+          </Text>
+
+          <Text style={styles.subtitle}>
+            Manage your restaurant menu with ease
+          </Text>
+
+        </View>
+
+        {/* CONTENT */}
+
+        <View style={styles.content}>
+
+          {/* ADD MENU ITEM BUTTON */}
+
+          <Pressable
+            style={styles.addButton}
+            onPress={() => {
+              clearForm();
+              setScreen('add');
+            }}
+          >
+
+            <Text style={styles.addButtonText}>
+              + Add Menu Item
+            </Text>
+
+          </Pressable>
+
+          {/* MENU HEADER */}
+
+          <View style={styles.sectionHeader}>
+
+            <Text style={styles.sectionTitle}>
+              Menu Items
+            </Text>
+
+            <Text style={styles.itemCount}>
+              {menuItems.length}{' '}
+              {menuItems.length === 1 ? 'item' : 'items'}
+            </Text>
+
+          </View>
+
+          {/* EMPTY MENU */}
+
+          {menuItems.length === 0 ? (
+
+            <View style={styles.emptyContainer}>
+
+              <Text style={styles.emptyIcon}>
+                🍽️
+              </Text>
+
+              <Text style={styles.emptyTitle}>
+                No Menu Items Yet
+              </Text>
+
+              <Text style={styles.emptyMessage}>
+                Add your first menu item to start
+                building your restaurant menu.
+              </Text>
+
+            </View>
+
+          ) : (
+
+            <FlatList
+              data={menuItems}
+              keyExtractor={(item) => item.id}
+              renderItem={renderMenuItem}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.list}
+            />
+
+          )}
+
+        </View>
+
+      </View>
+    );
+  }
+
+  // =====================================================
+  // ADD MENU ITEM SCREEN
+  // =====================================================
+
+  return (
+    <View style={styles.container}>
+
+      <StatusBar
+        barStyle="light-content"
+      />
+
+      {/* HEADER */}
+
+      <View style={styles.addHeader}>
+
+        <Pressable
+          style={styles.backButton}
+          onPress={() => {
+            clearForm();
+            setScreen('home');
+          }}
+        >
+
+          <Text style={styles.backText}>
+            ‹
+          </Text>
+
+        </Pressable>
+
+        <View>
+
+          <Text style={styles.addTitle}>
+            Add Menu Item
+          </Text>
+
+          <Text style={styles.addSubtitle}>
+            Enter the details below
+          </Text>
+
+        </View>
+
+      </View>
+
+      {/* FORM */}
+
+      <FlatList
+        data={[1]}
+        keyExtractor={() => 'form'}
+        showsVerticalScrollIndicator={false}
+        renderItem={() => (
+          <View style={styles.form}>
+
+            {/* ERROR MESSAGE */}
+
+            {error !== '' && (
+              <View style={styles.errorBox}>
+
+                <View style={styles.errorCircle}>
+
+                  <Text style={styles.errorCircleText}>
+                    !
+                  </Text>
+
+                </View>
+
+                <Text style={styles.errorText}>
+                  {error}
+                </Text>
+
+              </View>
+            )}
+
+            {/* DISH NAME */}
+
+            <View style={styles.inputGroup}>
+
+              <Text style={styles.label}>
+                Dish Name
+              </Text>
+
+              <TextInput
+                style={styles.input}
+                placeholder="e.g. Chicken Alfredo"
+                placeholderTextColor="#999999"
+                value={dishName}
+                onChangeText={(text) => {
+                  setDishName(text);
+                  setError('');
+                }}
+              />
+
+            </View>
+
+            {/* DESCRIPTION */}
+
+            <View style={styles.inputGroup}>
+
+              <Text style={styles.label}>
+                Description
+              </Text>
+
+              <TextInput
+                style={[
+                  styles.input,
+                  styles.descriptionInput,
+                ]}
+                placeholder="Describe the dish..."
+                placeholderTextColor="#999999"
+                value={description}
+                onChangeText={(text) => {
+                  setDescription(text);
+                  setError('');
+                }}
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+              />
+
+            </View>
+
+            {/* COURSE */}
+
+            <View style={styles.inputGroup}>
+
+              <Text style={styles.label}>
+                Course
+              </Text>
+
+              <View style={styles.pickerContainer}>
+
+                <Picker
+                  selectedValue={course}
+                  onValueChange={(itemValue) => {
+                    setCourse(itemValue);
+                    setError('');
+                  }}
+                >
+
+                  <Picker.Item
+                    label="Select a course"
+                    value=""
+                  />
+
+                  <Picker.Item
+                    label="Starter"
+                    value="Starter"
+                  />
+
+                  <Picker.Item
+                    label="Main Course"
+                    value="Main Course"
+                  />
+
+                  <Picker.Item
+                    label="Dessert"
+                    value="Dessert"
+                  />
+
+                  <Picker.Item
+                    label="Beverage"
+                    value="Beverage"
+                  />
+
+                </Picker>
+
+              </View>
+
+            </View>
+
+            {/* PRICE */}
+
+            <View style={styles.inputGroup}>
+
+              <Text style={styles.label}>
+                Price
+              </Text>
+
+              <View style={styles.priceContainer}>
+
+                <Text style={styles.currency}>
+                  R
+                </Text>
+
+                <TextInput
+                  style={styles.priceInput}
+                  placeholder="85.00"
+                  placeholderTextColor="#999999"
+                  value={price}
+                  onChangeText={(text) => {
+                    setPrice(text);
+                    setError('');
+                  }}
+                  keyboardType="decimal-pad"
+                />
+
+              </View>
+
+            </View>
+
+            {/* SAVE */}
+
+            <Pressable
+              style={styles.saveButton}
+              onPress={addMenuItem}
+            >
+
+              <Text style={styles.saveButtonText}>
+                SAVE MENU ITEM
+              </Text>
+
+            </Pressable>
+
+            {/* CANCEL */}
+
+            <Pressable
+              style={styles.cancelButton}
+              onPress={() => {
+                clearForm();
+                setScreen('home');
+              }}
+            >
+
+              <Text style={styles.cancelButtonText}>
+                Cancel
+              </Text>
+
+            </Pressable>
+
+          </View>
+        )}
+      />
+
+    </View>
+  );
+}
+
+// =====================================================
+// STYLES
+// =====================================================
+
+const styles = StyleSheet.create({
+
+  container: {
+    flex: 1,
+    backgroundColor: '#F6F7F8',
+  },
+
+  // HEADER
+
+  header: {
+    backgroundColor: '#17212B',
+    paddingTop: 60,
+    paddingHorizontal: 24,
+    paddingBottom: 30,
+    borderBottomLeftRadius: 25,
+    borderBottomRightRadius: 25,
+  },
+
+  title: {
+    color: '#FFFFFF',
+    fontSize: 30,
+    fontWeight: '700',
+  },
+
+  titleAccent: {
+    color: '#F4A261',
+    fontSize: 30,
+    fontWeight: '800',
+  },
+
+  subtitle: {
+    color: '#D5D9DC',
+    fontSize: 14,
+    marginTop: 8,
+  },
+
+  // CONTENT
+
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+  },
+
+  // ADD BUTTON
+
+  addButton: {
+    backgroundColor: '#E76F51',
+    paddingVertical: 17,
+    borderRadius: 14,
+    alignItems: 'center',
+    marginBottom: 25,
+    elevation: 4,
+  },
+
+  addButtonText: {
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: '700',
+  },
+
+  // SECTION
+
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+
+  sectionTitle: {
+    color: '#17212B',
+    fontSize: 21,
+    fontWeight: '800',
+  },
+
+  itemCount: {
+    color: '#777777',
+    fontSize: 14,
+  },
+
+  // EMPTY
+
+  emptyContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 35,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+
+  emptyIcon: {
+    fontSize: 50,
+    marginBottom: 12,
+  },
+
+  emptyTitle: {
+    color: '#17212B',
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+
+  emptyMessage: {
+    color: '#777777',
+    fontSize: 14,
+    lineHeight: 21,
+    textAlign: 'center',
+  },
+
+  // LIST
+
+  list: {
+    paddingBottom: 30,
+  },
+
+  menuCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 18,
+    marginBottom: 14,
+    elevation: 3,
+  },
+
+  menuTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+
+  dishName: {
+    flex: 1,
+    color: '#17212B',
+    fontSize: 19,
+    fontWeight: '800',
+    marginRight: 10,
+  },
+
+  courseBadge: {
+    backgroundColor: '#FFF0EA',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+
+  courseText: {
+    color: '#D95D39',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+
+  description: {
+    color: '#666666',
+    fontSize: 14,
+    lineHeight: 21,
+    marginTop: 12,
+  },
+
+  priceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#EEEEEE',
+    marginTop: 15,
+    paddingTop: 12,
+  },
+
+  priceLabel: {
+    color: '#777777',
+    fontSize: 13,
+  },
+
+  price: {
+    color: '#E76F51',
+    fontSize: 18,
+    fontWeight: '800',
+  },
+
+  // ADD HEADER
+
+  addHeader: {
+    backgroundColor: '#17212B',
+    paddingTop: 55,
+    paddingHorizontal: 20,
+    paddingBottom: 22,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  backButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#263442',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+
+  backText: {
+    color: '#FFFFFF',
+    fontSize: 35,
+    lineHeight: 38,
+    marginTop: -4,
+  },
+
+  addTitle: {
+    color: '#FFFFFF',
+    fontSize: 22,
+    fontWeight: '800',
+  },
+
+  addSubtitle: {
+    color: '#BFC6CC',
+    fontSize: 13,
+    marginTop: 3,
+  },
+
+  // FORM
+
+  form: {
+    padding: 20,
+    paddingBottom: 50,
+  },
+
+  inputGroup: {
+    marginBottom: 20,
+  },
+
+  label: {
+    color: '#17212B',
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+
+  input: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#DDDDDD',
+    borderRadius: 12,
+    paddingHorizontal: 15,
+    paddingVertical: 14,
+    fontSize: 15,
+    color: '#17212B',
+  },
+
+  descriptionInput: {
+    minHeight: 110,
+  },
+
+  // PICKER
+
+  pickerContainer: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#DDDDDD',
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+
+  // PRICE
+
+  priceContainer: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#DDDDDD',
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  currency: {
+    color: '#17212B',
+    fontSize: 17,
+    fontWeight: '700',
+    paddingLeft: 15,
+  },
+
+  priceInput: {
+    flex: 1,
+    color: '#17212B',
+    fontSize: 15,
+    paddingHorizontal: 10,
+    paddingVertical: 14,
+  },
+
+  // ERROR
+
+  errorBox: {
+    backgroundColor: '#FDECEC',
+    borderWidth: 1,
+    borderColor: '#F3B5B5',
+    borderRadius: 12,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+
+  errorCircle: {
+    backgroundColor: '#D64545',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+
+  errorCircleText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+
+  errorText: {
+    flex: 1,
+    color: '#B52B2B',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+
+  // SAVE
+
+  saveButton: {
+    backgroundColor: '#2A9D8F',
+    paddingVertical: 17,
+    borderRadius: 14,
+    alignItems: 'center',
+    marginTop: 5,
+  },
+
+  saveButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '800',
+  },
+
+  // CANCEL
+
+  cancelButton: {
+    paddingVertical: 15,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+
+  cancelButtonText: {
+    color: '#666666',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+
+});
